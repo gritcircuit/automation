@@ -122,11 +122,9 @@ jobs:
             main_exit=${PIPESTATUS[0]}
             echo "Main exit code: ${main_exit}"
             echo "Log files:"
-            find logs -maxdepth 2 -type f -print || true
+            ls -lR logs || true
             echo "Generated content files:"
-            find generated_content -maxdepth 2 -type f -print || true
-            ls -la logs || true
-            ls -la generated_content || true
+            ls -lR generated_content || true
             exit ${main_exit}
           else
             echo "ERROR: main.py not found in $GITHUB_WORKSPACE" >&2
@@ -134,14 +132,15 @@ jobs:
             exit 2
           fi
 
-      - name: Debug artifact directories
+      - name: Ensure artifacts exist
         shell: bash
         run: |
           cd "${{ github.workspace }}"
-          echo "Artifact tree at $(pwd)"
-          find generated_content logs -maxdepth 2 -type f | sort || true
-          ls -la generated_content || true
-          ls -la logs || true
+          mkdir -p logs generated_content
+          touch logs/placeholder.txt
+          touch generated_content/placeholder.txt
+          ls -la logs/
+          ls -la generated_content/
 
       - name: Upload generated content
         if: always()
