@@ -1,0 +1,121 @@
+name: Daily YouTube & TikTok Automation
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  automation:
+    runs-on: ubuntu-latest
+    env:
+      # opt into Node 24 if any JS actions require it
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies (if present)
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt not found; continuing without pip install"
+          fi
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          # fail early if essential secrets are missing
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "Missing required secret: OPENAI_API_KEY" >&2
+            exit 1
+          fi
+
+      - name: Create .env (securely)
+        shell: bash
+        run: |
+          mkdir -p .github
+          # write .env without printing values to logs
+          cat > .env << 'EOF'
+OPENAI_API_KEY=${OPENAI_API_KEY}
+YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID}
+YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET}
+YOUTUBE_REFRESH_TOKEN=${YOUTUBE_REFRESH_TOKEN}
+TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}
+TIKTOK_REFRESH_TOKEN=${TIKTOK_REFRESH_TOKEN}
+POSTING_TIME=09:00
+VIDEO_DURATION=60
+CONTENT_TYPE=motivation
+THUMBNAIL_PLATFORM=${THUMBNAIL_PLATFORM:-youtube}
+THUMBNAIL_WIDTH=1280
+THUMBNAIL_HEIGHT=720
+LOG_LEVEL=INFO
+EOF
+
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          THUMBNAIL_PLATFORM: ${{ secrets.THUMBNAIL_PLATFORM }}
+
+      - name: Prepare artifact folders
+        run: |
+          mkdir -p generated_content logs
+          touch generated_content/.placeholder
+          echo "workflow started at $(date -u)" > logs/run.log
+
+      - name: Debug workspace (non-sensitive)
+        shell: bash
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          pwd
+          ls -la --color=never
+          echo "Contents of workspace dir:"
+          ls -la "$GITHUB_WORKSPACE" || true
+
+      - name: Run automation once (capture logs)
+        shell: bash
+        run: |
+          set -o pipefail
+          # prefer running from GITHUB_WORKSPACE to avoid nested folder issues
+          cd "$GITHUB_WORKSPACE"
+          if [ -f main.py ]; then
+            python main.py once 2>&1 | tee -a logs/run.log
+            exit ${PIPESTATUS[0]}
+          else
+            echo "ERROR: main.py not found in $GITHUB_WORKSPACE" >&2
+            ls -la "$GITHUB_WORKSPACE"
+            exit 2
+          fi
+
+      - name: Upload generated content
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-content
+          path: generated_content/
+          retention-days: 7
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-logs
+          path: logs/
+          retention-days: 7
