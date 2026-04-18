@@ -46,25 +46,6 @@ jobs:
 
       - name: Create .env (securely)
         shell: bash
-        run: |
-          mkdir -p .github
-          # write .env without printing values to logs
-          cat > .env << 'EOF'
-OPENAI_API_KEY=${OPENAI_API_KEY}
-YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID}
-YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET}
-YOUTUBE_REFRESH_TOKEN=${YOUTUBE_REFRESH_TOKEN}
-TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}
-TIKTOK_REFRESH_TOKEN=${TIKTOK_REFRESH_TOKEN}
-POSTING_TIME=09:00
-VIDEO_DURATION=60
-CONTENT_TYPE=motivation
-THUMBNAIL_PLATFORM=${THUMBNAIL_PLATFORM:-youtube}
-THUMBNAIL_WIDTH=1280
-THUMBNAIL_HEIGHT=720
-LOG_LEVEL=INFO
-EOF
-
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
@@ -73,6 +54,23 @@ EOF
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
           TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
           THUMBNAIL_PLATFORM: ${{ secrets.THUMBNAIL_PLATFORM }}
+        run: |
+          mkdir -p .github
+          # write .env without printing values to logs
+          printf '%s\n' \
+            "OPENAI_API_KEY=${OPENAI_API_KEY}" \
+            "YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID}" \
+            "YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET}" \
+            "YOUTUBE_REFRESH_TOKEN=${YOUTUBE_REFRESH_TOKEN}" \
+            "TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}" \
+            "TIKTOK_REFRESH_TOKEN=${TIKTOK_REFRESH_TOKEN}" \
+            "POSTING_TIME=09:00" \
+            "VIDEO_DURATION=60" \
+            "CONTENT_TYPE=motivation" \
+            "THUMBNAIL_PLATFORM=${THUMBNAIL_PLATFORM:-youtube}" \
+            "THUMBNAIL_WIDTH=1280" \
+            "THUMBNAIL_HEIGHT=720" \
+            "LOG_LEVEL=INFO" > .env
 
       - name: Prepare artifact folders
         run: |
