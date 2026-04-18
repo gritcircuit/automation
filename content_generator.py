@@ -24,11 +24,25 @@ class ContentGenerator:
     
     def __init__(self, api_key: str):
         """Initialize OpenAI client"""
-        self.client = openai.OpenAI(api_key=api_key)
+        if not api_key:
+            print("⚠️ OpenAI API key not provided - content generation will use fallback")
+            self.client = None
+        else:
+            self.client = openai.OpenAI(api_key=api_key)
         self.model = "gpt-3.5-turbo"  # Use turbo for faster/cheaper results
     
     def generate_motivation_post(self) -> GeneratedContent:
         """Generate a motivational post with title, script, and metadata"""
+        
+        if not self.client:
+            print("Using fallback content (no OpenAI API key)")
+            return GeneratedContent(
+                title="Your Success Awaits",
+                script="Every day is a new opportunity. Don't wait for the perfect moment. Start now, make mistakes, learn, and grow. Your future self will thank you for taking action today.",
+                hashtags=["#Motivation", "#Success", "#Inspire", "#GrowthMindset", "#Goals", "#Action", "#Believe", "#Hustle"],
+                thumbnail_text="Start Now",
+                duration=60
+            )
         
         prompt = """Generate a short, inspiring motivational post for social media.
         
