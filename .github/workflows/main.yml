@@ -89,8 +89,9 @@ jobs:
             "LOG_LEVEL=INFO" > .env
 
       - name: Prepare artifact folders
-        working-directory: ${{ github.workspace }}
+        shell: bash
         run: |
+          cd "${{ github.workspace }}"
           mkdir -p generated_content logs
           echo "placeholder" > generated_content/placeholder.txt
           echo "workflow started at $(date -u)" > logs/run.log
@@ -107,8 +108,8 @@ jobs:
 
       - name: Run automation once (capture logs)
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
+          cd "${{ github.workspace }}"
           set -o pipefail
           pwd
           ls -la
@@ -135,8 +136,8 @@ jobs:
 
       - name: Debug artifact directories
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
+          cd "${{ github.workspace }}"
           echo "Artifact tree at $(pwd)"
           find generated_content logs -maxdepth 2 -type f | sort || true
           ls -la generated_content || true
