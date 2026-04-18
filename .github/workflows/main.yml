@@ -109,8 +109,15 @@ jobs:
           set -o pipefail
           # prefer running from GITHUB_WORKSPACE to avoid nested folder issues
           cd "$GITHUB_WORKSPACE"
+          mkdir -p logs generated_content
+          touch generated_content/.placeholder
+          touch logs/.placeholder
+          echo "Running from $(pwd)"
           if [ -f main.py ]; then
             python main.py once 2>&1 | tee -a logs/run.log
+            echo "Main exit code: ${PIPESTATUS[0]}"
+            ls -la logs || true
+            ls -la generated_content || true
             exit ${PIPESTATUS[0]}
           else
             echo "ERROR: main.py not found in $GITHUB_WORKSPACE" >&2
@@ -123,7 +130,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: generated-content
-          path: generated_content/
+          path: generated_content/**
           retention-days: 7
 
       - name: Upload logs
@@ -131,5 +138,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: automation-logs
-          path: logs/
+          path: logs/**
           retention-days: 7
