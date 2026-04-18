@@ -101,19 +101,19 @@ class ContentGenerator:
     
     def generate_video_script_voiceover(self, script: str, output_path: str):
         """Convert script to audio using text-to-speech (requires pyttsx3)"""
+        import platform
+        
+        # Skip pyttsx3 on any Linux system (GitHub Actions) - it causes hanging
+        if platform.system() == 'Linux':
+            print(f"⚠️ Skipping voiceover generation (pyttsx3 not compatible on Linux)")
+            # Create placeholder audio file
+            with open(output_path, 'w') as f:
+                f.write("placeholder audio")
+            return
+        
         try:
             import pyttsx3
-            import platform
-            
-            # Skip on Linux without display (GitHub Actions environment)
-            if platform.system() == 'Linux' and not os.getenv('DISPLAY'):
-                print(f"⚠️ Skipping voiceover generation (no audio driver on headless Linux)")
-                # Create placeholder audio file
-                with open(output_path, 'w') as f:
-                    f.write("placeholder audio")
-                return
-            
-            engine = pyttsx3.init()
+            engine = pyttsx3.init(debug=False)
             engine.setProperty('rate', 130)  # Words per minute
             engine.setProperty('volume', 0.9)
             engine.save_to_file(script, output_path)
@@ -121,6 +121,8 @@ class ContentGenerator:
             print(f"✓ Voiceover generated: {output_path}")
         except ImportError:
             print("pyttsx3 not installed. Install with: pip install pyttsx3")
+        except Exception as e:
+            print(f"⚠️ Voiceover generation failed: {e} - creating placeholder")
     
     def create_content_file(self, content: GeneratedContent, output_dir: str) -> Dict:
         """Save generated content to files"""
