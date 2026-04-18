@@ -20,21 +20,21 @@ try:
     MOVIEPY_AVAILABLE = True
 except ImportError:
     MOVIEPY_AVAILABLE = False
-    print("⚠️  MoviePy not available - video creation disabled")
+    print("WARNING: MoviePy not available - video creation disabled")
 
 try:
     from youtube_uploader import YouTubeUploader
     YOUTUBE_AVAILABLE = True
 except ImportError:
     YOUTUBE_AVAILABLE = False
-    print("⚠️  YouTube API not available - YouTube upload disabled")
+    print("WARNING: YouTube API not available - YouTube upload disabled")
 
 try:
     from tiktok_uploader import TikTokUploader
     TIKTOK_AVAILABLE = True
 except ImportError:
     TIKTOK_AVAILABLE = False
-    print("⚠️  TikTok API not available - TikTok upload disabled")
+    print("WARNING: TikTok API not available - TikTok upload disabled")
 
 
 class AutomationSystem:
@@ -77,10 +77,12 @@ class AutomationSystem:
         self.scheduler = BackgroundScheduler()
         self.posting_time = os.getenv('POSTING_TIME', '09:00')
         
-        self.logger.info("✓ Automation system initialized")
+        self.logger.info("Automation system initialized")
     
     def _setup_logging(self):
         """Setup logging configuration"""
+        self._ensure_utf8_output()
+
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
         
@@ -91,22 +93,32 @@ class AutomationSystem:
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(log_file),
-                logging.StreamHandler()
+                logging.StreamHandler(sys.stdout)
             ]
         )
         
         self.logger = logging.getLogger(__name__)
+
+    def _ensure_utf8_output(self):
+        """Force console output to UTF-8 where possible."""
+        try:
+            if hasattr(sys.stdout, 'reconfigure'):
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            if hasattr(sys.stderr, 'reconfigure'):
+                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
     
     def _init_uploaders(self):
         """Initialize YouTube and TikTok uploaders"""
         if YOUTUBE_AVAILABLE:
             try:
                 self.youtube_uploader = YouTubeUploader()
-                self.logger.info("✓ YouTube uploader initialized")
+                self.logger.info("YouTube uploader initialized")
             except Exception as e:
-                self.logger.error(f"❌ YouTube initialization failed: {e}")
+                self.logger.error(f"YouTube initialization failed: {e}")
         else:
-            self.logger.warning("⚠️  YouTube API not available")
+            self.logger.warning("YouTube API not available")
         
         if TIKTOK_AVAILABLE:
             try:
@@ -118,22 +130,22 @@ class AutomationSystem:
                         access_token=tiktok_token,
                         refresh_token=tiktok_refresh
                     )
-                    self.logger.info("✓ TikTok uploader initialized")
+                    self.logger.info("TikTok uploader initialized")
             except Exception as e:
-                self.logger.error(f"❌ TikTok initialization failed: {e}")
+                self.logger.error(f"TikTok initialization failed: {e}")
         else:
-            self.logger.warning("⚠️  TikTok API not available")
+            self.logger.warning("TikTok API not available")
     
     def generate_and_post(self):
         """Main function: Generate content and post to all platforms"""
         
         try:
             self.logger.info("=" * 60)
-            self.logger.info("🚀 Starting daily content generation and posting")
+            self.logger.info("Starting daily content generation and posting")
             self.logger.info("=" * 60)
             
             # Step 1: Generate content
-            self.logger.info("📝 Generating motivational content...")
+            self.logger.info("Generating motivational content...")
             content = self.content_generator.generate_motivation_post()
             
             # Create content directory
@@ -154,10 +166,10 @@ class AutomationSystem:
             with open(os.path.join(content_dir, 'metadata.json'), 'w') as f:
                 json.dump(content_metadata, f, indent=2)
             
-            self.logger.info(f"📝 Content generated: {content.title}")
+            self.logger.info(f"Content generated: {content.title}")
             
             # Step 2: Generate thumbnail
-            self.logger.info("🎨 Generating thumbnail...")
+            self.logger.info("Generating thumbnail...")
             thumbnail_path = os.path.join(content_dir, 'thumbnail.jpg')
             self.thumbnail_generator.create_thumbnail(
                 title=content.title,
@@ -166,7 +178,7 @@ class AutomationSystem:
             )
             
             # Step 3: Create video
-            self.logger.info("🎬 Creating video...")
+            self.logger.info("Creating video...")
             video_path = os.path.join(content_dir, 'video.mp4')
             
             if self.video_creator:
@@ -178,7 +190,7 @@ class AutomationSystem:
                 )
             else:
                 # Create placeholder video if MoviePy not available
-                self.logger.warning("⚠️  Creating placeholder video (MoviePy not available)")
+                self.logger.warning("Creating placeholder video (MoviePy not available)")
                 import subprocess
                 try:
                     cmd = [
@@ -191,10 +203,10 @@ class AutomationSystem:
                     self.logger.warning(f"Placeholder video creation failed: {e}")
             
             if not os.path.exists(video_path):
-                self.logger.warning("⚠️  Video file not created - continuing with upload anyway")
+                self.logger.warning("Video file not created - continuing with upload anyway")
             
             # Step 4: Generate voiceover
-            self.logger.info("🎙️ Generating voiceover...")
+            self.logger.info("Generating voiceover...")
             audio_path = os.path.join(content_dir, 'voiceover.mp3')
             self.content_generator.generate_video_script_voiceover(
                 script=content.script,
@@ -203,7 +215,7 @@ class AutomationSystem:
             
             # Step 5: Post to YouTube
             if self.youtube_uploader:
-                self.logger.info("📤 Uploading to YouTube...")
+                self.logger.info("Uploading to YouTube...")
                 description = f"{content.script}\n\nGenerated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
                 
                 youtube_id = self.youtube_uploader.upload_video(
@@ -217,17 +229,17 @@ class AutomationSystem:
                 
                 if youtube_id:
                     content_metadata['youtube_id'] = youtube_id
-                    self.logger.info(f"✓ Posted to YouTube: {youtube_id}")
+                    self.logger.info(f"Posted to YouTube: {youtube_id}")
                     
                     # Display YouTube link
                     yt_link = f"https://www.youtube.com/watch?v={youtube_id}"
-                    self.logger.info(f"🔗 YouTube link: {yt_link}")
+                    self.logger.info(f"YouTube link: {yt_link}")
             else:
-                self.logger.info("⏭️  Skipping YouTube (API not available)")
+                self.logger.info("Skipping YouTube (API not available)")
             
             # Step 6: Post to TikTok
             if self.tiktok_uploader:
-                self.logger.info("📤 Uploading to TikTok...")
+                self.logger.info("Uploading to TikTok...")
                 
                 tiktok_id = self.tiktok_uploader.upload_video(
                     video_path=video_path,
@@ -239,20 +251,20 @@ class AutomationSystem:
                 
                 if tiktok_id:
                     content_metadata['tiktok_id'] = tiktok_id
-                    self.logger.info(f"✓ Posted to TikTok: {tiktok_id}")
+                    self.logger.info(f"Posted to TikTok: {tiktok_id}")
             
             # Save final metadata
             with open(os.path.join(content_dir, 'metadata.json'), 'w') as f:
                 json.dump(content_metadata, f, indent=2)
             
             self.logger.info("=" * 60)
-            self.logger.info("✓ Daily content generation and posting completed successfully!")
+            self.logger.info("Daily content generation and posting completed successfully!")
             self.logger.info("=" * 60)
             
             return True
         
         except Exception as e:
-            self.logger.error(f"❌ Error in generate_and_post: {e}", exc_info=True)
+            self.logger.error(f"Error in generate_and_post: {e}", exc_info=True)
             return False
     
     def schedule_daily_posting(self):
@@ -270,7 +282,7 @@ class AutomationSystem:
             replace_existing=True
         )
         
-        self.logger.info(f"✓ Scheduled daily posting at {self.posting_time}")
+        self.logger.info(f"Scheduled daily posting at {self.posting_time}")
     
     def start(self):
         """Start the automation scheduler"""
@@ -279,8 +291,8 @@ class AutomationSystem:
             self.schedule_daily_posting()
             self.scheduler.start()
             
-            self.logger.info("🚀 Automation system started!")
-            self.logger.info(f"📅 Posting daily at {self.posting_time}")
+            self.logger.info("Automation system started!")
+            self.logger.info(f"Posting daily at {self.posting_time}")
             self.logger.info("Press Ctrl+C to stop the scheduler")
             
             # Keep the scheduler running
@@ -289,12 +301,12 @@ class AutomationSystem:
                     import time
                     time.sleep(1)
             except KeyboardInterrupt:
-                self.logger.info("⏹️  Shutting down automation system...")
+                self.logger.info("Shutting down automation system...")
                 self.scheduler.shutdown()
-                self.logger.info("✓ Automation system stopped")
+                self.logger.info("Automation system stopped")
         
         except Exception as e:
-            self.logger.error(f"❌ Error starting automation system: {e}", exc_info=True)
+            self.logger.error(f"Error starting automation system: {e}", exc_info=True)
     
     def run_once(self):
         """Run content generation and posting once (useful for testing)"""
@@ -330,14 +342,14 @@ def main():
         
         if command == 'once':
             # Run content generation once
-            print("\n🎬 Running content generation once...")
+            print("\nRunning content generation once...")
             success = automation.run_once()
             sys.exit(0 if success else 1)
         
         elif command == 'status':
             # Show status
             status = automation.get_status()
-            print("\n📊 Automation System Status:")
+            print("\nAutomation System Status:")
             print(json.dumps(status, indent=2))
             sys.exit(0)
         
