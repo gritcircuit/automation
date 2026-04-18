@@ -3,7 +3,13 @@ Content Generator Module
 Generates motivational content using OpenAI and creates video/audio
 """
 
-import openai
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    print("WARNING: OpenAI not available - using fallback content only")
+
 import os
 from typing import Dict
 from datetime import datetime
@@ -24,7 +30,10 @@ class ContentGenerator:
     
     def __init__(self, api_key: str):
         """Initialize OpenAI client"""
-        if not api_key:
+        if not OPENAI_AVAILABLE:
+            print("⚠️ OpenAI library not available - content generation will use fallback")
+            self.client = None
+        elif not api_key:
             print("⚠️ OpenAI API key not provided - content generation will use fallback")
             self.client = None
         else:
@@ -35,7 +44,7 @@ class ContentGenerator:
         """Generate a motivational post with title, script, and metadata"""
         
         if not self.client:
-            print("Using fallback content (no OpenAI API key)")
+            print("Using fallback content (OpenAI not available or no API key)")
             return GeneratedContent(
                 title="Your Success Awaits",
                 script="Every day is a new opportunity. Don't wait for the perfect moment. Start now, make mistakes, learn, and grow. Your future self will thank you for taking action today.",

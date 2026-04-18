@@ -4,13 +4,32 @@ Creates custom thumbnail images with dynamic text overlays
 Supports multiple aspect ratios: YouTube, TikTok, Instagram, custom
 """
 
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+try:
+    from PIL import Image, ImageDraw, ImageFont, ImageFilter
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    print("WARNING: PIL not available - thumbnail generation disabled")
+
 import os
 from typing import Tuple, Optional, Dict
 from datetime import datetime
 import textwrap
 
 
+class ThumbnailGenerator:
+    """Generates custom thumbnails with flexible sizing for different platforms"""
+    
+    # Platform presets
+    PRESETS = {
+        'youtube': {'width': 1280, 'height': 720, 'name': 'YouTube'},
+        'tiktok': {'width': 1080, 'height': 1920, 'name': 'TikTok/Reels'},
+        'instagram': {'width': 1080, 'height': 1080, 'name': 'Instagram Square'},
+        'instagram_story': {'width': 1080, 'height': 1920, 'name': 'Instagram Story'},
+        'twitter': {'width': 1200, 'height': 675, 'name': 'Twitter'},
+        'custom': None  # Custom size specified by user
+    }
+    
 class ThumbnailGenerator:
     """Generates custom thumbnails with flexible sizing for different platforms"""
     
@@ -33,6 +52,13 @@ class ThumbnailGenerator:
             height: Thumbnail height in pixels
             platform: Use preset dimensions ('youtube', 'tiktok', 'instagram', etc.)
         """
+        if not PIL_AVAILABLE:
+            print("⚠️ PIL not available - thumbnail generation disabled")
+            self.width = width
+            self.height = height
+            self.platform = platform
+            return
+            
         # Load preset if specified
         if platform in self.PRESETS and self.PRESETS[platform]:
             preset = self.PRESETS[platform]
@@ -80,6 +106,13 @@ class ThumbnailGenerator:
         Returns:
             Path to created thumbnail
         """
+        
+        if not PIL_AVAILABLE:
+            print(f"⚠️ PIL not available - creating placeholder thumbnail at {output_path}")
+            # Create a simple placeholder file
+            with open(output_path, 'w') as f:
+                f.write("Placeholder thumbnail - PIL not available")
+            return output_path
         
         # Select background color
         if bg_color is None:

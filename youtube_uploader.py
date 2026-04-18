@@ -5,12 +5,18 @@ Handles authentication and video uploads to YouTube
 
 import os
 import pickle
-import google_auth_oauthlib.flow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.api_python_client.discovery import build
 from typing import Dict, Optional
+
+try:
+    import google_auth_oauthlib.flow
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.api_python_client.discovery import build
+    GOOGLE_API_AVAILABLE = True
+except ImportError:
+    GOOGLE_API_AVAILABLE = False
+    print("WARNING: Google API client not available - YouTube uploads disabled")
 import time
 
 
@@ -23,12 +29,20 @@ class YouTubeUploader:
     
     def __init__(self, credentials_file: str = "credentials.json"):
         """Initialize YouTube uploader"""
+        if not GOOGLE_API_AVAILABLE:
+            print("⚠️ Google API not available - YouTube uploads disabled")
+            self.youtube = None
+            return
+            
         self.credentials_file = credentials_file
         self.youtube = None
         self.authenticate()
     
     def authenticate(self):
         """Authenticate with YouTube API using OAuth2"""
+        if not GOOGLE_API_AVAILABLE:
+            return
+            
         creds = None
         
         # Load existing credentials
