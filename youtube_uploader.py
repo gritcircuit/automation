@@ -52,18 +52,20 @@ class YouTubeUploader:
                 scopes=self.SCOPES
             )
             # Refresh the token
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                print(f"❌ Failed to refresh YouTube credentials: {e}")
+                creds = None
         elif creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         elif not creds or not creds.valid:
             if not os.path.exists(self.credentials_file):
-                raise FileNotFoundError(
-                    f"⚠️ {self.credentials_file} not found and no environment variables provided!\n"
-                    "Either set YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN environment variables\n"
-                    "or get credentials.json from: https://console.cloud.google.com/\n"
-                    "1. Create OAuth 2.0 credentials (Desktop application)\n"
-                    "2. Download JSON and rename to credentials.json"
-                )
+                print("⚠️ No valid YouTube credentials found. YouTube uploads will be disabled.")
+                print("To enable YouTube uploads, either:")
+                print("1. Set YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN environment variables")
+                print("2. Or provide credentials.json file")
+                return  # Don't raise exception, just disable YouTube
             
             flow = InstalledAppFlow.from_client_secrets_file(
                 self.credentials_file,
@@ -71,18 +73,22 @@ class YouTubeUploader:
             )
             creds = flow.run_local_server(port=0)
         
-        # Save credentials
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-        
-        # Build YouTube API client
-        self.youtube = build(
-            self.API_SERVICE_NAME,
-            self.API_VERSION,
-            credentials=creds
-        )
-        
-        print("✓ YouTube authentication successful")
+        if creds:
+            # Save credentials
+            with open("token.pickle", "wb") as token:
+                pickle.dump(creds, token)
+            
+            # Build YouTube API client
+            self.youtube = build(
+                self.API_SERVICE_NAME,
+                self.API_VERSION,
+                credentials=creds
+            )
+            
+            print("✓ YouTube authentication successful")
+        else:
+            self.youtube = None
+            print("⚠️ YouTube authentication failed - uploads disabled")
     
     def upload_video(
         self,
@@ -95,6 +101,10 @@ class YouTubeUploader:
         made_for_kids: bool = False
     ) -> Optional[str]:
         """Upload video to YouTube with thumbnail"""
+        
+        if not self.youtube:
+            print("⚠️ YouTube API not available - skipping upload")
+            return None
         
         if not os.path.exists(video_path):
             print(f"❌ Video file not found: {video_path}")
