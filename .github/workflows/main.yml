@@ -43,6 +43,18 @@ jobs:
             echo "Missing required secret: OPENAI_API_KEY" >&2
             exit 1
           fi
+          if [ -z "${{ secrets.YOUTUBE_CLIENT_ID }}" ]; then
+            echo "Missing required secret: YOUTUBE_CLIENT_ID" >&2
+            exit 1
+          fi
+          if [ -z "${{ secrets.YOUTUBE_CLIENT_SECRET }}" ]; then
+            echo "Missing required secret: YOUTUBE_CLIENT_SECRET" >&2
+            exit 1
+          fi
+          if [ -z "${{ secrets.YOUTUBE_REFRESH_TOKEN }}" ]; then
+            echo "Missing required secret: YOUTUBE_REFRESH_TOKEN" >&2
+            exit 1
+          fi
 
       - name: Create .env (securely)
         shell: bash
@@ -53,6 +65,8 @@ jobs:
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
           TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
           THUMBNAIL_PLATFORM: ${{ secrets.THUMBNAIL_PLATFORM }}
         run: |
           mkdir -p .github
@@ -64,6 +78,8 @@ jobs:
             "YOUTUBE_REFRESH_TOKEN=${YOUTUBE_REFRESH_TOKEN}" \
             "TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}" \
             "TIKTOK_REFRESH_TOKEN=${TIKTOK_REFRESH_TOKEN}" \
+            "TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}" \
+            "TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}" \
             "POSTING_TIME=09:00" \
             "VIDEO_DURATION=60" \
             "CONTENT_TYPE=motivation" \

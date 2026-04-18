@@ -36,14 +36,31 @@ class YouTubeUploader:
             with open("token.pickle", "rb") as token:
                 creds = pickle.load(token)
         
-        # Refresh or create new credentials
-        if creds and creds.expired and creds.refresh_token:
+        # Try to use environment variables for authentication
+        client_id = os.getenv('YOUTUBE_CLIENT_ID')
+        client_secret = os.getenv('YOUTUBE_CLIENT_SECRET')
+        refresh_token = os.getenv('YOUTUBE_REFRESH_TOKEN')
+        
+        if client_id and client_secret and refresh_token:
+            # Create credentials from environment variables
+            creds = Credentials(
+                token=None,  # Will be obtained via refresh
+                refresh_token=refresh_token,
+                client_id=client_id,
+                client_secret=client_secret,
+                token_uri="https://oauth2.googleapis.com/token",
+                scopes=self.SCOPES
+            )
+            # Refresh the token
+            creds.refresh(Request())
+        elif creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         elif not creds or not creds.valid:
             if not os.path.exists(self.credentials_file):
                 raise FileNotFoundError(
-                    f"⚠️ {self.credentials_file} not found!\n"
-                    "Get it from: https://console.cloud.google.com/\n"
+                    f"⚠️ {self.credentials_file} not found and no environment variables provided!\n"
+                    "Either set YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN environment variables\n"
+                    "or get credentials.json from: https://console.cloud.google.com/\n"
                     "1. Create OAuth 2.0 credentials (Desktop application)\n"
                     "2. Download JSON and rename to credentials.json"
                 )
