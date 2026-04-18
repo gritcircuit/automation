@@ -130,7 +130,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: generated-content
-          path: generated_content/**
+          path: generated_content
           retention-days: 7
 
       - name: Upload logs
@@ -138,5 +138,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: automation-logs
-          path: logs/**
+          path: logs
           retention-days: 7
