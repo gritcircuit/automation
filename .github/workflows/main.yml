@@ -151,6 +151,7 @@ jobs:
             generated_content
           if-no-files-found: warn
           retention-days: 7
+        working-directory: ${{ github.workspace }}
 
       - name: Upload logs
         if: always()
@@ -161,3 +162,4 @@ jobs:
             logs
           if-no-files-found: warn
           retention-days: 7
+        working-directory: ${{ github.workspace }}
