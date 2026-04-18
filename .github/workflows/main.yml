@@ -92,9 +92,9 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           mkdir -p generated_content logs
-          touch generated_content/placeholder.txt
+          echo "placeholder" > generated_content/placeholder.txt
           echo "workflow started at $(date -u)" > logs/run.log
-          touch logs/placeholder.txt
+          echo "placeholder" > logs/placeholder.txt
 
       - name: Debug workspace (non-sensitive)
         shell: bash
@@ -113,8 +113,8 @@ jobs:
           pwd
           ls -la
           mkdir -p logs generated_content
-          touch generated_content/placeholder.txt
-          touch logs/placeholder.txt
+          echo "placeholder" > generated_content/placeholder.txt
+          echo "placeholder" > logs/placeholder.txt
           echo "Running from $(pwd)"
           if [ -f main.py ]; then
             python main.py once 2>&1 | tee -a logs/run.log
@@ -132,6 +132,15 @@ jobs:
             ls -la "$GITHUB_WORKSPACE"
             exit 2
           fi
+
+      - name: Debug artifact directories
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "Artifact tree at $(pwd)"
+          find generated_content logs -maxdepth 2 -type f | sort || true
+          ls -la generated_content || true
+          ls -la logs || true
 
       - name: Upload generated content
         if: always()
