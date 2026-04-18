@@ -92,8 +92,9 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           mkdir -p generated_content logs
-          touch generated_content/.placeholder
+          touch generated_content/placeholder.txt
           echo "workflow started at $(date -u)" > logs/run.log
+          touch logs/placeholder.txt
 
       - name: Debug workspace (non-sensitive)
         shell: bash
@@ -112,8 +113,8 @@ jobs:
           pwd
           ls -la
           mkdir -p logs generated_content
-          touch generated_content/.placeholder
-          touch logs/.placeholder
+          touch generated_content/placeholder.txt
+          touch logs/placeholder.txt
           echo "Running from $(pwd)"
           if [ -f main.py ]; then
             python main.py once 2>&1 | tee -a logs/run.log
@@ -138,6 +139,7 @@ jobs:
         with:
           name: generated-content
           path: generated_content
+          if-no-files-found: warn
           retention-days: 7
 
       - name: Upload logs
@@ -146,4 +148,5 @@ jobs:
         with:
           name: automation-logs
           path: logs
+          if-no-files-found: warn
           retention-days: 7

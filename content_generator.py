@@ -72,7 +72,8 @@ class ContentGenerator:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=800
+                max_tokens=800,
+                timeout=30
             )
             
             # Parse response

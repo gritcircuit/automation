@@ -41,7 +41,7 @@ class TikTokUploader:
                 "refresh_token": self.refresh_token
             }
             
-            response = requests.post(refresh_url, json=payload)
+            response = requests.post(refresh_url, json=payload, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()

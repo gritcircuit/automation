@@ -67,12 +67,16 @@ class YouTubeUploader:
             )
             # Refresh the token
             try:
-                creds.refresh(Request())
+                creds.refresh(Request(timeout=30))
             except Exception as e:
                 print(f"❌ Failed to refresh YouTube credentials: {e}")
                 creds = None
         elif creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request(timeout=30))
+            except Exception as e:
+                print(f"❌ Failed to refresh existing YouTube credentials: {e}")
+                creds = None
         elif not creds or not creds.valid:
             if not os.path.exists(self.credentials_file):
                 print("⚠️ No valid YouTube credentials found. YouTube uploads will be disabled.")
