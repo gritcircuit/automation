@@ -103,6 +103,16 @@ class ContentGenerator:
         """Convert script to audio using text-to-speech (requires pyttsx3)"""
         try:
             import pyttsx3
+            import platform
+            
+            # Skip on Linux without display (GitHub Actions environment)
+            if platform.system() == 'Linux' and not os.getenv('DISPLAY'):
+                print(f"⚠️ Skipping voiceover generation (no audio driver on headless Linux)")
+                # Create placeholder audio file
+                with open(output_path, 'w') as f:
+                    f.write("placeholder audio")
+                return
+            
             engine = pyttsx3.init()
             engine.setProperty('rate', 130)  # Words per minute
             engine.setProperty('volume', 0.9)
